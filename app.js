@@ -1,15 +1,8 @@
-// ========================================
-// WATER + ELECTROLYTE BALANCE TOOL
-// Production-Ready Application
-// All JavaScript Integrated
-// ========================================
 
 (function() {
     'use strict';
 
-    // ========================================
-    // CONFIGURATION & CONSTANTS
-    // ========================================
+  // Application configuration and constant values
 
     const CONFIG = {
         // Storage keys
@@ -42,14 +35,12 @@
         LBS_TO_KG: 0.453592
     };
 
-    // ========================================
     // UTILITY FUNCTIONS
-    // ========================================
 
     const Utils = {
-        /**
-         * Debounce function to limit execution rate
-         */
+
+       // Delays function execution until the user stops triggering it
+
         debounce(func, wait) {
             let timeout;
             return function executedFunction(...args) {
@@ -62,40 +53,37 @@
             };
         },
 
-        /**
-         * Sanitize user input to prevent XSS
-         */
+      // Escapes user input to prevent XSS attacks
+
         sanitize(str) {
             const div = document.createElement('div');
             div.textContent = str;
             return div.innerHTML;
         },
 
-        /**
-         * Format number with commas
-         */
+       // Formats a number with commas for better readability
+
         formatNumber(num) {
             return Math.round(num).toLocaleString();
         },
 
-        /**
-         * Get current timestamp in ISO format
-         */
+         // Get current timestamp in ISO format
+         
         getTimestamp() {
             return new Date().toISOString();
         },
 
-        /**
-         * Get current date string (YYYY-MM-DD)
-         */
+        
+         // Get current date string (YYYY-MM-DD)
+         
         getDateString() {
             const now = new Date();
             return now.toISOString().split('T')[0];
         },
 
-        /**
-         * Get current time string (HH:MM)
-         */
+        
+         // Get current time string (HH:MM)
+         
         getTimeString() {
             const now = new Date();
             return now.toLocaleTimeString('en-US', { 
@@ -105,9 +93,8 @@
             });
         },
 
-        /**
-         * Validate number within range
-         */
+        // Validates that a number is within the allowed range
+
         validateNumber(value, min, max) {
             const num = parseFloat(value);
             if (isNaN(num)) return { valid: false, error: 'Please enter a valid number' };
@@ -116,9 +103,8 @@
             return { valid: true, value: num };
         },
 
-        /**
-         * Check if localStorage is available
-         */
+        // Checks whether localStorage is accessible in the current environment
+
         isLocalStorageAvailable() {
             try {
                 const test = '__localStorage_test__';
@@ -131,14 +117,11 @@
         }
     };
 
-    // ========================================
-    // STORAGE MANAGER
-    // ========================================
+ // Handles all localStorage operations
 
     const StorageManager = {
-        /**
-         * Get data from localStorage
-         */
+        // Retrieves saved data from localStorage
+
         getData() {
             if (!Utils.isLocalStorageAvailable()) {
                 console.warn('localStorage not available');
@@ -154,9 +137,8 @@
             }
         },
 
-        /**
-         * Save data to localStorage
-         */
+        // Saves application data to localStorage
+
         saveData(data) {
             if (!Utils.isLocalStorageAvailable()) {
                 console.warn('localStorage not available - data not persisted');
@@ -183,9 +165,8 @@
             }
         },
 
-        /**
-         * Get default data structure
-         */
+        // Removes tracking data older than 30 days to prevent storage overflow
+
         getDefaultData() {
             return {
                 userProfile: {},
@@ -194,9 +175,9 @@
             };
         },
 
-        /**
-         * Clear old tracking data (>30 days)
-         */
+        
+         // Clear old tracking data (>30 days)
+         
         clearOldData() {
             const data = this.getData();
             const cutoffDate = new Date();
@@ -216,9 +197,8 @@
             this.saveData(data);
         },
 
-        /**
-         * Save user profile
-         */
+         // Save user profile
+         
         saveProfile(profile) {
             const data = this.getData();
             data.userProfile = {
@@ -228,27 +208,25 @@
             return this.saveData(data);
         },
 
-        /**
-         * Save daily goals
-         */
+         // Save daily goals
+         
         saveGoals(goals) {
             const data = this.getData();
             data.dailyGoals = goals;
             return this.saveData(data);
         },
 
-        /**
-         * Get today's tracking data
-         */
+        
+         // Get today's tracking data
+         
         getTodayTracking() {
             const data = this.getData();
             const today = Utils.getDateString();
             return data.tracking[today] || { waterIntake: [] };
         },
 
-        /**
-         * Save today's tracking data
-         */
+         // Save today's tracking data
+         
         saveTodayTracking(trackingData) {
             const data = this.getData();
             const today = Utils.getDateString();
@@ -256,9 +234,9 @@
             return this.saveData(data);
         },
 
-        /**
-         * Reset today's tracking
-         */
+        
+         // Reset today's tracking
+         
         resetTodayTracking() {
             const data = this.getData();
             const today = Utils.getDateString();
@@ -267,17 +245,16 @@
         }
     };
 
-    // ========================================
-    // TOAST NOTIFICATION MANAGER
-    // ========================================
+    // Manages toast notifications and their lifecycle
+
 
     const ToastManager = {
         container: null,
         activeToasts: new Map(),
         toastQueue: [],
 
-        /**
-         * Initialize toast container
+        /*
+          Initialize toast container
          */
         init() {
             this.container = document.getElementById('toast-container');
@@ -286,8 +263,8 @@
             }
         },
 
-        /**
-         * Show toast notification
+        /*
+          Show toast notification
          */
         show(message, type = 'info', duration = CONFIG.TOAST_DURATION) {
             if (!this.container) return;
@@ -323,8 +300,8 @@
             return toastId;
         },
 
-        /**
-         * Create toast element
+        /*
+          Create toast element
          */
         createToast(message, type, toastId) {
             const toast = document.createElement('div');
@@ -358,8 +335,8 @@
             return toast;
         },
 
-        /**
-         * Get icon SVG path based on type
+        /*
+          Get icon SVG path based on type
          */
         getIconSvg(type) {
             const icons = {
@@ -371,8 +348,8 @@
             return icons[type] || icons.info;
         },
 
-        /**
-         * Remove toast by ID
+        /*
+          Remove toast by ID
          */
         remove(toastId) {
             const toastData = this.activeToasts.get(toastId);
@@ -393,8 +370,8 @@
             }, 300);
         },
 
-        /**
-         * Remove duplicate toast by exact message match
+        /*
+          Remove duplicate toast by exact message match
          */
         removeDuplicateByMessage(message) {
             // Find and remove any toast with the same message
@@ -405,8 +382,8 @@
             }
         },
 
-        /**
-         * Clear all toasts
+        /*
+         *Clear all toasts
          */
         clearAll() {
             const toastIds = Array.from(this.activeToasts.keys());
@@ -414,13 +391,11 @@
         }
     };
 
-    // ========================================
-    // CALCULATION ENGINE
-    // ========================================
+    // Contains all hydration and electrolyte calculation logic
 
     const Calculator = {
-        /**
-         * Calculate water requirements
+        /*
+          Calculate water requirements
          */
         calculateWater(params) {
             const {
@@ -493,8 +468,8 @@
             return Math.round(waterRequirement);
         },
 
-        /**
-         * Calculate electrolyte requirements
+        /*
+          Calculate electrolyte requirements
          */
         calculateElectrolytes(params) {
             const {
@@ -552,8 +527,8 @@
             };
         },
 
-        /**
-         * Generate personalized recommendations
+        /*
+          Generate personalized recommendations
          */
         generateRecommendations(params, waterRequirement, electrolytes) {
             const recommendations = [];
@@ -619,8 +594,8 @@
             return recommendations;
         },
 
-        /**
-         * Validate inconsistencies in user input
+        /*
+          Validate inconsistencies in user input
          */
         validateConsistency(params) {
             const warnings = [];
@@ -651,13 +626,11 @@
         }
     };
 
-    // ========================================
-    // FORM VALIDATOR
-    // ========================================
+   // Responsible for validating form inputs
 
     const FormValidator = {
-        /**
-         * Validate weight input
+        /*
+          Validate weight input
          */
         validateWeight(weight, unit) {
             const min = unit === 'kg' ? 20 : 44;
@@ -665,22 +638,22 @@
             return Utils.validateNumber(weight, min, max);
         },
 
-        /**
-         * Validate age input
+        /*
+          Validate age input
          */
         validateAge(age) {
             return Utils.validateNumber(age, 1, 120);
         },
 
-        /**
-         * Validate exercise duration
+        /*
+          Validate exercise duration
          */
         validateExerciseDuration(duration) {
             return Utils.validateNumber(duration, 0, 1440);
         },
 
-        /**
-         * Show error message
+        /*
+          Show error message
          */
         showError(elementId, message) {
             const errorElement = document.getElementById(`${elementId}-error`);
@@ -690,8 +663,8 @@
             }
         },
 
-        /**
-         * Clear error message
+        /*
+          Clear error message
          */
         clearError(elementId) {
             const errorElement = document.getElementById(`${elementId}-error`);
@@ -701,8 +674,8 @@
             }
         },
 
-        /**
-         * Validate all form inputs
+        /*
+          Validate all form inputs
          */
         validateForm() {
             let isValid = true;
@@ -744,9 +717,8 @@
         }
     };
 
-    // ========================================
-    // UI MANAGER
-    // ========================================
+  // Handles UI updates and user interactions
+
 
     const UIManager = {
         /**
@@ -795,8 +767,8 @@
             });
         },
 
-        /**
-         * Setup calculate button
+        /*
+         Setup calculate button
          */
         setupCalculateButton() {
             const calculateBtn = document.getElementById('calculate-btn');
@@ -823,8 +795,8 @@
             });
         },
 
-        /**
-         * Clear form inputs only
+        /*
+          Clear form inputs only
          */
         clearForm() {
             // Reset all form inputs to default
@@ -860,8 +832,8 @@
             document.getElementById('tracker-section').style.display = 'none';
         },
 
-        /**
-         * Reset all settings and clear all data
+        /*
+          Reset all settings and clear all data
          */
         resetAllSettings() {
             // Clear form
@@ -884,8 +856,8 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         },
 
-        /**
-         * Handle calculation
+        /*
+          Handle calculation
          */
         handleCalculate() {
             // Validate form
@@ -930,8 +902,8 @@
             });
         },
 
-        /**
-         * Gather form data
+        /*
+          Gather form data
          */
         gatherFormData() {
             const weightInput = document.getElementById('weight').value;
@@ -959,8 +931,8 @@
             };
         },
 
-        /**
-         * Display calculation results
+        /*
+          Display calculation results
          */
         displayResults(waterRequirement, electrolytes, recommendations) {
             // Show results section
@@ -988,8 +960,8 @@
             `).join('');
         },
 
-        /**
-         * Initialize tracking section
+        /*
+          Initialize tracking section
          */
         initializeTracking(waterRequirement) {
             const trackerSection = document.getElementById('tracker-section');
@@ -1003,8 +975,8 @@
             this.updateTrackingUI(todayData, waterRequirement);
         },
 
-        /**
-         * Setup tracking functionality
+        /*
+          Setup tracking functionality
          */
         setupTracking() {
             const addIntakeBtn = document.getElementById('add-intake-btn');
@@ -1046,8 +1018,8 @@
             });
         },
 
-        /**
-         * Validate intake amount
+        /*
+          Validate intake amount
          */
         validateIntakeAmount(amount) {
             if (isNaN(amount) || amount <= 0) {
@@ -1063,8 +1035,8 @@
             return true;
         },
 
-        /**
-         * Add water intake
+        /*
+          Add water intake
          */
         addIntake(amount) {
             const todayData = StorageManager.getTodayTracking();
@@ -1084,8 +1056,8 @@
             ToastManager.show(`Added ${amount}ml to your intake`, 'success');
         },
 
-        /**
-         * Delete water intake entry
+        /*
+          Delete water intake entry
          */
         deleteIntake(index) {
             const todayData = StorageManager.getTodayTracking();
@@ -1095,8 +1067,8 @@
             ToastManager.show('Entry deleted', 'info');
         },
 
-        /**
-         * Update tracking UI
+        /*
+          Update tracking UI
          */
         updateTrackingUI(todayData, goal) {
             const waterIntake = todayData.waterIntake || [];
@@ -1121,8 +1093,8 @@
             }
         },
 
-        /**
-         * Update intake list
+        /*
+          Update intake list
          */
         updateIntakeList(waterIntake) {
             const intakeList = document.getElementById('intake-list');
@@ -1160,16 +1132,16 @@
             });
         },
 
-        /**
-         * Get current water goal
+        /*
+          Get current water goal
          */
         getCurrentGoal() {
             const data = StorageManager.getData();
             return data.dailyGoals?.water || 0;
         },
 
-        /**
-         * Load saved data on page load
+        /*
+          Load saved data on page load
          */
         loadSavedData() {
             const data = StorageManager.getData();
@@ -1193,8 +1165,8 @@
             }
         },
 
-        /**
-         * Populate form with saved data
+        /*
+          Populate form with saved data
          */
         populateForm(profile) {
             // Weight - store in kg, display in user's preferred unit
@@ -1222,12 +1194,12 @@
         }
     };
 
-    // ========================================
+  
     // INITIALIZATION
-    // ========================================
+  
 
-    /**
-     * Initialize application when DOM is ready
+    /*
+      Initialize application when DOM is ready
      */
     function initializeApp() {
         // Initialize managers
@@ -1240,9 +1212,8 @@
         console.log('Water + Electrolyte Balance Tool initialized successfully');
     }
 
-    /**
-     * Check for date change and reset tracking if needed
-     */
+   // Detects day change and ensures tracking reflects the correct date
+
     function checkMidnightRollover() {
         const lastDate = localStorage.getItem('last_active_date');
         const currentDate = Utils.getDateString();
@@ -1255,9 +1226,9 @@
         localStorage.setItem('last_active_date', currentDate);
     }
 
-    // ========================================
+
     // EVENT LISTENERS
-    // ========================================
+    
 
     // Initialize when DOM is ready
     if (document.readyState === 'loading') {

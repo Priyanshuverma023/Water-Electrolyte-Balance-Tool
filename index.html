@@ -1,324 +1,452 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Calculate your personalized daily water and electrolyte requirements based on activity, climate, and health factors.">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Calculate your personalized daily water and electrolyte requirements based on activity, climate, and health factors."
+    />
     <title>Water + Electrolyte Balance Tool</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
     <!-- Toast Container -->
-    <div id="toast-container" role="region" aria-live="polite" aria-atomic="true"></div>
+    <div
+      id="toast-container"
+      role="region"
+      aria-live="polite"
+      aria-atomic="true"
+    ></div>
 
     <!-- Main Container -->
     <div class="container">
-        <!-- Header -->
-        <header class="header">
-            <div class="header-content">
-                <h1 class="title">Hydration<span class="accent">+</span></h1>
-                <p class="subtitle">Personalized Water & Electrolyte Balance Calculator</p>
+      <!-- Header -->
+      <header class="header">
+        <div class="header-content">
+          <h1 class="title">Hydration<span class="accent">+</span></h1>
+          <p class="subtitle">
+            Personalized Water & Electrolyte Balance Calculator
+          </p>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <!-- Input Section -->
+        <section class="card input-section">
+          <h2 class="section-title">Personal Information</h2>
+
+          <div class="form-grid">
+            <!-- Weight Input -->
+            <div class="form-group">
+              <label for="weight" class="form-label">
+                <img
+                  src="./assets/svgs/user.svg"
+                  alt=""
+                  class="icon"
+                  aria-hidden="true"
+                />
+                <span>Weight</span>
+              </label>
+              <div class="input-with-toggle">
+                <input
+                  type="number"
+                  id="weight"
+                  class="form-input"
+                  placeholder="70"
+                  min="20"
+                  max="300"
+                  step="0.1"
+                  aria-describedby="weight-error"
+                  required
+                />
+                <div class="unit-toggle">
+                  <button
+                    type="button"
+                    class="unit-btn active"
+                    data-unit="kg"
+                    aria-pressed="true"
+                  >
+                    kg
+                  </button>
+                  <button
+                    type="button"
+                    class="unit-btn"
+                    data-unit="lbs"
+                    aria-pressed="false"
+                  >
+                    lbs
+                  </button>
+                </div>
+              </div>
+              <span id="weight-error" class="error-message" role="alert"></span>
             </div>
-        </header>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Input Section -->
-            <section class="card input-section">
-                <h2 class="section-title">Personal Information</h2>
-                
-                <div class="form-grid">
-                    <!-- Weight Input -->
-                    <div class="form-group">
-                        <label for="weight" class="form-label">
-                            <img src="./assets/svgs/user.svg" alt="" class="icon" aria-hidden="true">
-                            <span>Weight</span>
-                        </label>
-                        <div class="input-with-toggle">
-                            <input 
-                                type="number" 
-                                id="weight" 
-                                class="form-input" 
-                                placeholder="70"
-                                min="20"
-                                max="300"
-                                step="0.1"
-                                aria-describedby="weight-error"
-                                required>
-                            <div class="unit-toggle">
-                                <button type="button" class="unit-btn active" data-unit="kg" aria-pressed="true">kg</button>
-                                <button type="button" class="unit-btn" data-unit="lbs" aria-pressed="false">lbs</button>
-                            </div>
-                        </div>
-                        <span id="weight-error" class="error-message" role="alert"></span>
-                    </div>
-
-                    <!-- Age Input -->
-                    <div class="form-group">
-                        <label for="age" class="form-label">
-                            <img src="./assets/svgs/age.svg" alt="" class="icon" aria-hidden="true">
-                            <span>Age</span>
-                        </label>
-                        <input 
-                            type="number" 
-                            id="age" 
-                            class="form-input" 
-                            placeholder="30"
-                            min="1"
-                            max="120"
-                            aria-describedby="age-error"
-                            required>
-                        <span id="age-error" class="error-message" role="alert"></span>
-                    </div>
-
-                    <!-- Gender Select -->
-                    <div class="form-group">
-                        <label for="gender" class="form-label">
-                            <img src="./assets/svgs/gender.svg" alt="" class="icon" aria-hidden="true">
-                            <span>Gender</span>
-                        </label>
-                        <select id="gender" class="form-select" required>
-                            <option value="">Select</option>
-                            <option value="male">Male</option>
-                            <option value="female">Female</option>
-                            <option value="other">Other</option>
-                        </select>
-                    </div>
-
-                    <!-- Activity Level -->
-                    <div class="form-group">
-                        <label for="activity-level" class="form-label">
-                            <img src="./assets/svgs/activity.svg" alt="" class="icon" aria-hidden="true">
-                            <span>Activity Level</span>
-                        </label>
-                        <select id="activity-level" class="form-select" required>
-                            <option value="">Select</option>
-                            <option value="sedentary">Sedentary (Little/no exercise)</option>
-                            <option value="light">Light (1-3 days/week)</option>
-                            <option value="moderate">Moderate (3-5 days/week)</option>
-                            <option value="active">Very Active (6-7 days/week)</option>
-                            <option value="athlete">Athlete (2x per day)</option>
-                        </select>
-                    </div>
-
-                    <!-- Exercise Duration -->
-                    <div class="form-group">
-                        <label for="exercise-duration" class="form-label">
-                            <img src="./assets/svgs/exercise-duration.svg" alt="" class="icon" aria-hidden="true">
-                            <span>Exercise Duration (min/day)</span>
-                        </label>
-                        <input 
-                            type="number" 
-                            id="exercise-duration" 
-                            class="form-input" 
-                            placeholder="30"
-                            min="0"
-                            max="1440"
-                            value="0">
-                    </div>
-
-                    <!-- Exercise Intensity -->
-                    <div class="form-group">
-                        <label for="exercise-intensity" class="form-label">
-                            <img src="./assets//svgs/excercise-intensity.svg" alt="" class="icon" aria-hidden="true">
-                            <span>Exercise Intensity</span>
-                        </label>
-                        <select id="exercise-intensity" class="form-select">
-                            <option value="low">Low</option>
-                            <option value="medium" selected>Medium</option>
-                            <option value="high">High</option>
-                        </select>
-                    </div>
-
-                    <!-- Climate -->
-                    <div class="form-group">
-                        <label for="climate" class="form-label">
-                            <img src="./assets/svgs/temperature.svg" alt="" class="icon" aria-hidden="true">
-                            <span>Climate</span>
-                        </label>
-                        <select id="climate" class="form-select" required>
-                            <option value="">Select</option>
-                            <option value="cool">Cool (< 15°C / 59°F)</option>
-                            <option value="moderate" selected>Moderate (15-25°C / 59-77°F)</option>
-                            <option value="hot">Hot (25-35°C / 77-95°F)</option>
-                            <option value="very-hot">Very Hot (> 35°C / 95°F)</option>
-                        </select>
-                    </div>
-
-                    <!-- Altitude -->
-                    <div class="form-group">
-                        <label for="altitude" class="form-label">
-                            <img src="./assets/svgs/altitude.svg" alt="" class="icon" aria-hidden="true">
-                            <span>Altitude</span>
-                        </label>
-                        <select id="altitude" class="form-select">
-                            <option value="sea-level" selected>Sea Level (0-500m)</option>
-                            <option value="moderate">Moderate (500-2000m)</option>
-                            <option value="high">High (> 2000m)</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Health Conditions -->
-                <div class="health-conditions">
-                    <h3 class="subsection-title">Health Conditions (Optional)</h3>
-                    <div class="checkbox-grid">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="pregnant" class="checkbox">
-                            <span>Pregnant</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="breastfeeding" class="checkbox">
-                            <span>Breastfeeding</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="illness" class="checkbox">
-                            <span>Illness (Fever/Diarrhea)</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="kidney-disease" class="checkbox">
-                            <span>Kidney Disease</span>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="action-buttons">
-                    <button id="calculate-btn" class="btn btn-primary" type="button">
-                        Calculate Requirements
-                    </button>
-                    <div class="secondary-actions">
-                        <button id="clear-form-btn" class="btn btn-secondary-outline" type="button">
-                            Clear Form
-                        </button>
-                        <button id="reset-settings-btn" class="btn btn-danger-outline" type="button">
-                            Reset All Data
-                        </button>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Results Section -->
-            <section id="results-section" class="card results-section" style="display: none;">
-                <h2 class="section-title">Your Daily Requirements</h2>
-                
-                <!-- Water Requirement -->
-                <div class="result-card water-card">
-                    <div class="result-header">
-                        <img src="./assets/svgs/water-drop.svg" alt="" class="result-icon" aria-hidden="true">
-                        <h3 class="result-title">Water Intake</h3>
-                    </div>
-                    <div class="result-value">
-                        <span id="water-amount" class="amount">0</span>
-                        <span class="unit">ml/day</span>
-                    </div>
-                    <div class="result-subtitle" id="water-cups">0 cups (250ml each)</div>
-                </div>
-
-                <!-- Electrolytes Grid -->
-                <div class="electrolytes-grid">
-                    <!-- Sodium -->
-                    <div class="electrolyte-card">
-                        <h4 class="electrolyte-name">Sodium</h4>
-                        <div class="electrolyte-value">
-                            <span id="sodium-amount">0</span>
-                            <span class="electrolyte-unit">mg</span>
-                        </div>
-                    </div>
-
-                    <!-- Potassium -->
-                    <div class="electrolyte-card">
-                        <h4 class="electrolyte-name">Potassium</h4>
-                        <div class="electrolyte-value">
-                            <span id="potassium-amount">0</span>
-                            <span class="electrolyte-unit">mg</span>
-                        </div>
-                    </div>
-
-                    <!-- Magnesium -->
-                    <div class="electrolyte-card">
-                        <h4 class="electrolyte-name">Magnesium</h4>
-                        <div class="electrolyte-value">
-                            <span id="magnesium-amount">0</span>
-                            <span class="electrolyte-unit">mg</span>
-                        </div>
-                    </div>
-
-                    <!-- Calcium -->
-                    <div class="electrolyte-card">
-                        <h4 class="electrolyte-name">Calcium</h4>
-                        <div class="electrolyte-value">
-                            <span id="calcium-amount">0</span>
-                            <span class="electrolyte-unit">mg</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Recommendations -->
-                <div class="recommendations" id="recommendations">
-                    <!-- Dynamic recommendations will be inserted here -->
-                </div>
-            </section>
-
-            <!-- Tracker Section -->
-            <section id="tracker-section" class="card tracker-section" style="display: none;">
-                <h2 class="section-title">Today's Tracking</h2>
-                
-                <!-- Progress Bar -->
-                <div class="progress-container">
-                    <div class="progress-header">
-                        <span class="progress-label">Water Intake Progress</span>
-                        <span class="progress-percentage" id="progress-percentage">0%</span>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="progress-fill" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
-                    </div>
-                    <div class="progress-footer">
-                        <span id="current-intake">0 ml</span>
-                        <span id="target-intake">/ 0 ml</span>
-                    </div>
-                </div>
-
-                <!-- Add Intake Form -->
-                <div class="intake-form">
-                    <label for="intake-amount" class="form-label">Add Water Intake</label>
-                    <div class="intake-input-group">
-                        <input 
-                            type="number" 
-                            id="intake-amount" 
-                            class="form-input" 
-                            placeholder="250"
-                            min="1"
-                            max="5000"
-                            step="1">
-                        <span class="input-unit">ml</span>
-                        <button id="add-intake-btn" class="btn btn-secondary" type="button">Add</button>
-                    </div>
-                    <div class="quick-add-btns">
-                        <button class="quick-btn" data-amount="250">Glass (250ml)</button>
-                        <button class="quick-btn" data-amount="500">Bottle (500ml)</button>
-                        <button class="quick-btn" data-amount="750">Large Bottle (750ml)</button>
-                    </div>
-                </div>
-
-                <!-- Intake History -->
-                <div class="intake-history">
-                    <h3 class="subsection-title">Today's Log</h3>
-                    <div id="intake-list" class="intake-list">
-                        <!-- Dynamic intake entries will be inserted here -->
-                    </div>
-                    <button id="reset-tracker-btn" class="btn btn-text" type="button">Reset Today's Tracking</button>
-                </div>
-            </section>
-
-            <!-- Disclaimer -->
-            <div class="disclaimer">
-                <img src="./assets/svgs/info.svg" alt="" class="icon" aria-hidden="true">
-                <p><strong>Medical Disclaimer:</strong> This tool provides general hydration guidance only. Always consult with a healthcare provider for personalized medical advice, especially if you have kidney disease, heart conditions, or other health concerns.</p>
+            <!-- Age Input -->
+            <div class="form-group">
+              <label for="age" class="form-label">
+                <img
+                  src="./assets/svgs/age.svg"
+                  alt=""
+                  class="icon"
+                  aria-hidden="true"
+                />
+                <span>Age</span>
+              </label>
+              <input
+                type="number"
+                id="age"
+                class="form-input"
+                placeholder="30"
+                min="1"
+                max="120"
+                aria-describedby="age-error"
+                required
+              />
+              <span id="age-error" class="error-message" role="alert"></span>
             </div>
-        </main>
+
+            <!-- Gender Select -->
+            <div class="form-group">
+              <label for="gender" class="form-label">
+                <img
+                  src="./assets/svgs/gender.svg"
+                  alt=""
+                  class="icon"
+                  aria-hidden="true"
+                />
+                <span>Gender</span>
+              </label>
+              <select id="gender" class="form-select" required>
+                <option value="">Select</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            <!-- Activity Level -->
+            <div class="form-group">
+              <label for="activity-level" class="form-label">
+                <img
+                  src="./assets/svgs/activity.svg"
+                  alt=""
+                  class="icon"
+                  aria-hidden="true"
+                />
+                <span>Activity Level</span>
+              </label>
+              <select id="activity-level" class="form-select" required>
+                <option value="">Select</option>
+                <option value="sedentary">
+                  Sedentary (Little/no exercise)
+                </option>
+                <option value="light">Light (1-3 days/week)</option>
+                <option value="moderate">Moderate (3-5 days/week)</option>
+                <option value="active">Very Active (6-7 days/week)</option>
+                <option value="athlete">Athlete (2x per day)</option>
+              </select>
+            </div>
+
+            <!-- Exercise Duration -->
+            <div class="form-group">
+              <label for="exercise-duration" class="form-label">
+                <img
+                  src="./assets/svgs/exercise-duration.svg"
+                  alt=""
+                  class="icon"
+                  aria-hidden="true"
+                />
+                <span>Exercise Duration (min/day)</span>
+              </label>
+              <input
+                type="number"
+                id="exercise-duration"
+                class="form-input"
+                placeholder="30"
+                min="0"
+                max="1440"
+                value="0"
+              />
+            </div>
+
+            <!-- Exercise Intensity -->
+            <div class="form-group">
+              <label for="exercise-intensity" class="form-label">
+                <img
+                  src="./assets//svgs/excercise-intensity.svg"
+                  alt=""
+                  class="icon"
+                  aria-hidden="true"
+                />
+                <span>Exercise Intensity</span>
+              </label>
+              <select id="exercise-intensity" class="form-select">
+                <option value="low">Low</option>
+                <option value="medium" selected>Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+
+            <!-- Climate -->
+            <div class="form-group">
+              <label for="climate" class="form-label">
+                <img
+                  src="./assets/svgs/temperature.svg"
+                  alt=""
+                  class="icon"
+                  aria-hidden="true"
+                />
+                <span>Climate</span>
+              </label>
+              <select id="climate" class="form-select" required>
+                <option value="">Select</option>
+                <option value="cool">Cool (< 15°C / 59°F)</option>
+                <option value="moderate" selected>
+                  Moderate (15-25°C / 59-77°F)
+                </option>
+                <option value="hot">Hot (25-35°C / 77-95°F)</option>
+                <option value="very-hot">Very Hot (> 35°C / 95°F)</option>
+              </select>
+            </div>
+
+            <!-- Altitude -->
+            <div class="form-group">
+              <label for="altitude" class="form-label">
+                <img
+                  src="./assets/svgs/altitude.svg"
+                  alt=""
+                  class="icon"
+                  aria-hidden="true"
+                />
+                <span>Altitude</span>
+              </label>
+              <select id="altitude" class="form-select">
+                <option value="sea-level" selected>Sea Level (0-500m)</option>
+                <option value="moderate">Moderate (500-2000m)</option>
+                <option value="high">High (> 2000m)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Health Conditions -->
+          <div class="health-conditions">
+            <h3 class="subsection-title">Health Conditions (Optional)</h3>
+            <div class="checkbox-grid">
+              <label class="checkbox-label">
+                <input type="checkbox" id="pregnant" class="checkbox" />
+                <span>Pregnant</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="breastfeeding" class="checkbox" />
+                <span>Breastfeeding</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="illness" class="checkbox" />
+                <span>Illness (Fever/Diarrhea)</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="kidney-disease" class="checkbox" />
+                <span>Kidney Disease</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="action-buttons">
+            <button id="calculate-btn" class="btn btn-primary" type="button">
+              Calculate Requirements
+            </button>
+            <div class="secondary-actions">
+              <button
+                id="clear-form-btn"
+                class="btn btn-secondary-outline"
+                type="button"
+              >
+                Clear Form
+              </button>
+              <button
+                id="reset-settings-btn"
+                class="btn btn-danger-outline"
+                type="button"
+              >
+                Reset All Data
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Results Section -->
+        <section
+          id="results-section"
+          class="card results-section"
+          style="display: none"
+        >
+          <h2 class="section-title">Your Daily Requirements</h2>
+
+          <!-- Water Requirement -->
+          <div class="result-card water-card">
+            <div class="result-header">
+              <img
+                src="./assets/svgs/water-drop.svg"
+                alt=""
+                class="result-icon"
+                aria-hidden="true"
+              />
+              <h3 class="result-title">Water Intake</h3>
+            </div>
+            <div class="result-value">
+              <span id="water-amount" class="amount">0</span>
+              <span class="unit">ml/day</span>
+            </div>
+            <div class="result-subtitle" id="water-cups">
+              0 cups (250ml each)
+            </div>
+          </div>
+
+          <!-- Electrolytes Grid -->
+          <div class="electrolytes-grid">
+            <!-- Sodium -->
+            <div class="electrolyte-card">
+              <h4 class="electrolyte-name">Sodium</h4>
+              <div class="electrolyte-value">
+                <span id="sodium-amount">0</span>
+                <span class="electrolyte-unit">mg</span>
+              </div>
+            </div>
+
+            <!-- Potassium -->
+            <div class="electrolyte-card">
+              <h4 class="electrolyte-name">Potassium</h4>
+              <div class="electrolyte-value">
+                <span id="potassium-amount">0</span>
+                <span class="electrolyte-unit">mg</span>
+              </div>
+            </div>
+
+            <!-- Magnesium -->
+            <div class="electrolyte-card">
+              <h4 class="electrolyte-name">Magnesium</h4>
+              <div class="electrolyte-value">
+                <span id="magnesium-amount">0</span>
+                <span class="electrolyte-unit">mg</span>
+              </div>
+            </div>
+
+            <!-- Calcium -->
+            <div class="electrolyte-card">
+              <h4 class="electrolyte-name">Calcium</h4>
+              <div class="electrolyte-value">
+                <span id="calcium-amount">0</span>
+                <span class="electrolyte-unit">mg</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recommendations -->
+          <div class="recommendations" id="recommendations">
+            <!-- Dynamic recommendations will be inserted here -->
+          </div>
+        </section>
+
+        <!-- Tracker Section -->
+        <section
+          id="tracker-section"
+          class="card tracker-section"
+          style="display: none"
+        >
+          <h2 class="section-title">Today's Tracking</h2>
+
+          <!-- Progress Bar -->
+          <div class="progress-container">
+            <div class="progress-header">
+              <span class="progress-label">Water Intake Progress</span>
+              <span class="progress-percentage" id="progress-percentage"
+                >0%</span
+              >
+            </div>
+            <div class="progress-bar">
+              <div
+                class="progress-fill"
+                id="progress-fill"
+                role="progressbar"
+                aria-valuenow="0"
+                aria-valuemin="0"
+                aria-valuemax="100"
+              ></div>
+            </div>
+            <div class="progress-footer">
+              <span id="current-intake">0 ml</span>
+              <span id="target-intake">/ 0 ml</span>
+            </div>
+          </div>
+
+          <!-- Add Intake Form -->
+          <div class="intake-form">
+            <label for="intake-amount" class="form-label"
+              >Add Water Intake</label
+            >
+            <div class="intake-input-group">
+              <input
+                type="number"
+                id="intake-amount"
+                class="form-input"
+                placeholder="250"
+                min="1"
+                max="5000"
+                step="1"
+              />
+              <span class="input-unit">ml</span>
+              <button
+                id="add-intake-btn"
+                class="btn btn-secondary"
+                type="button"
+              >
+                Add
+              </button>
+            </div>
+            <div class="quick-add-btns">
+              <button class="quick-btn" data-amount="250">Glass (250ml)</button>
+              <button class="quick-btn" data-amount="500">
+                Bottle (500ml)
+              </button>
+              <button class="quick-btn" data-amount="750">
+                Large Bottle (750ml)
+              </button>
+            </div>
+          </div>
+
+          <!-- Intake History -->
+          <div class="intake-history">
+            <h3 class="subsection-title">Today's Log</h3>
+            <div id="intake-list" class="intake-list">
+              <!-- Dynamic intake entries will be inserted here -->
+            </div>
+            <button id="reset-tracker-btn" class="btn btn-text" type="button">
+              Reset Today's Tracking
+            </button>
+          </div>
+        </section>
+
+        <!-- Disclaimer -->
+        <div class="disclaimer">
+          <img
+            src="./assets/svgs/info.svg"
+            alt=""
+            class="icon"
+            aria-hidden="true"
+          />
+          <p>
+            <strong>Medical Disclaimer:</strong> This tool provides general
+            hydration guidance only. Always consult with a healthcare provider
+            for personalized medical advice, especially if you have kidney
+            disease, heart conditions, or other health concerns.
+          </p>
+        </div>
+      </main>
     </div>
 
     <script src="app.js"></script>
-</body>
+  </body>
 </html>
