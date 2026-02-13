@@ -2,20 +2,19 @@
 (function() {
     'use strict';
 
-  // Application configuration and constant values
-
+    // configuration constants
     const CONFIG = {
         // Storage keys
         STORAGE_KEY: 'hydration_data',
         
         // Calculation constants
-        BASE_WATER_PER_KG: 35, // ml per kg body weight
-        EXERCISE_WATER_PER_HOUR: 500, // ml per hour
+        BASE_WATER_PER_KG: 35,
+        EXERCISE_WATER_PER_HOUR: 500,
         
         // Safety limits
-        MIN_WATER: 1500, // ml/day
-        MAX_WATER: 10000, // ml/day
-        DANGER_WATER: 5000, // ml/day - hyponatremia warning threshold
+        MIN_WATER: 1500,
+        MAX_WATER: 10000,
+        DANGER_WATER: 5000,
         
         // Electrolyte limits (mg/day)
         SODIUM: { min: 1500, max: 2300, danger: 5000 },
@@ -24,23 +23,20 @@
         CALCIUM: { young: 1000, senior: 1200, danger: 2500 },
         
         // Toast settings
-        TOAST_DURATION: 4000, // ms
+        TOAST_DURATION: 4000,
         MAX_TOASTS: 3,
         
         // Debounce delay
-        DEBOUNCE_DELAY: 300, // ms
+        DEBOUNCE_DELAY: 300,
         
         // Weight conversion
         KG_TO_LBS: 2.20462,
         LBS_TO_KG: 0.453592
     };
 
-    // UTILITY FUNCTIONS
-
+    // utility functions
     const Utils = {
-
-       // Delays function execution until the user stops triggering it
-
+        // debounce function to limit execution rate
         debounce(func, wait) {
             let timeout;
             return function executedFunction(...args) {
@@ -53,37 +49,30 @@
             };
         },
 
-      // Escapes user input to prevent XSS attacks
-
+        // sanitize user input to prevent XSS
         sanitize(str) {
             const div = document.createElement('div');
             div.textContent = str;
             return div.innerHTML;
         },
 
-       // Formats a number with commas for better readability
-
+        // format number with commas
         formatNumber(num) {
             return Math.round(num).toLocaleString();
         },
 
-         // Get current timestamp in ISO format
-         
+        // get current timestamp in ISO format
         getTimestamp() {
             return new Date().toISOString();
         },
 
-        
-         // Get current date string (YYYY-MM-DD)
-         
+        // get current date string (YYYY-MM-DD)
         getDateString() {
             const now = new Date();
             return now.toISOString().split('T')[0];
         },
 
-        
-         // Get current time string (HH:MM)
-         
+        // get current time string (HH:MM)
         getTimeString() {
             const now = new Date();
             return now.toLocaleTimeString('en-US', { 
@@ -93,8 +82,7 @@
             });
         },
 
-        // Validates that a number is within the allowed range
-
+        // validate number within range
         validateNumber(value, min, max) {
             const num = parseFloat(value);
             if (isNaN(num)) return { valid: false, error: 'Please enter a valid number' };
@@ -103,8 +91,7 @@
             return { valid: true, value: num };
         },
 
-        // Checks whether localStorage is accessible in the current environment
-
+        // check if localStorage is available
         isLocalStorageAvailable() {
             try {
                 const test = '__localStorage_test__';
@@ -117,11 +104,9 @@
         }
     };
 
- // Handles all localStorage operations
-
+    // localStorage manager
     const StorageManager = {
-        // Retrieves saved data from localStorage
-
+        // get data from localStorage
         getData() {
             if (!Utils.isLocalStorageAvailable()) {
                 console.warn('localStorage not available');
@@ -137,8 +122,7 @@
             }
         },
 
-        // Saves application data to localStorage
-
+        // save data to localStorage
         saveData(data) {
             if (!Utils.isLocalStorageAvailable()) {
                 console.warn('localStorage not available - data not persisted');
@@ -165,8 +149,7 @@
             }
         },
 
-        // Removes tracking data older than 30 days to prevent storage overflow
-
+        // get default data structure
         getDefaultData() {
             return {
                 userProfile: {},
@@ -175,9 +158,7 @@
             };
         },
 
-        
-         // Clear old tracking data (>30 days)
-         
+        // clear old tracking data (>30 days)
         clearOldData() {
             const data = this.getData();
             const cutoffDate = new Date();
@@ -197,8 +178,7 @@
             this.saveData(data);
         },
 
-         // Save user profile
-         
+        // save user profile
         saveProfile(profile) {
             const data = this.getData();
             data.userProfile = {
@@ -208,25 +188,21 @@
             return this.saveData(data);
         },
 
-         // Save daily goals
-         
+        // save daily goals
         saveGoals(goals) {
             const data = this.getData();
             data.dailyGoals = goals;
             return this.saveData(data);
         },
 
-        
-         // Get today's tracking data
-         
+        // get today's tracking data
         getTodayTracking() {
             const data = this.getData();
             const today = Utils.getDateString();
             return data.tracking[today] || { waterIntake: [] };
         },
 
-         // Save today's tracking data
-         
+        // save today's tracking data
         saveTodayTracking(trackingData) {
             const data = this.getData();
             const today = Utils.getDateString();
@@ -234,9 +210,7 @@
             return this.saveData(data);
         },
 
-        
-         // Reset today's tracking
-         
+        // reset today's tracking
         resetTodayTracking() {
             const data = this.getData();
             const today = Utils.getDateString();
@@ -245,17 +219,13 @@
         }
     };
 
-    // Manages toast notifications and their lifecycle
-
-
+    // toast notification manager
     const ToastManager = {
         container: null,
         activeToasts: new Map(),
         toastQueue: [],
 
-        /*
-          Initialize toast container
-         */
+        // initialize toast container
         init() {
             this.container = document.getElementById('toast-container');
             if (!this.container) {
@@ -263,36 +233,26 @@
             }
         },
 
-        /*
-          Show toast notification
-         */
+        // show toast notification
         show(message, type = 'info', duration = CONFIG.TOAST_DURATION) {
             if (!this.container) return;
 
-            // CRITICAL: Remove existing toast with same message
-           const existingToastIds = Array.from(this.activeToasts.keys());
-           existingToastIds.forEach(id => {
-            const toastData = this.activeToasts.get(id);
-            if(toastData && toastData.element && toastData.element.parentNode) {
-                toastData.element.parentNode.removeChild(toastData.element);
-            }
-            this.activeToasts.delete(id);
-           })
-           
+            // clear existing toasts
+            this.container.innerHTML = '';
+            this.activeToasts.clear();
 
             const toastId = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
             const toast = this.createToast(message, type, toastId);
             
-            // Add to container (will stack with CSS)
             this.container.appendChild(toast);
             this.activeToasts.set(toastId, { element: toast, message: message });
 
-            // Trigger animation
+            // trigger show animation
             setTimeout(() => {
                 toast.classList.add('show');
             }, 10);
 
-            // Auto-dismiss
+            // auto-dismiss after duration
             if (duration > 0) {
                 setTimeout(() => this.remove(toastId), duration);
             }
@@ -300,9 +260,27 @@
             return toastId;
         },
 
-        /*
-          Create toast element
-         */
+        // show confirmation toast with action buttons
+        showConfirm(message, onConfirm, onCancel, type = 'info') {
+            if (!this.container) return;
+
+            this.container.innerHTML = '';
+            this.activeToasts.clear();
+
+            const toastId = `toast-confirm-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            const toast = this.createConfirmToast(message, type, toastId, onConfirm, onCancel);
+            
+            this.container.appendChild(toast);
+            this.activeToasts.set(toastId, { element: toast, message: message });
+
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 10);
+
+            return toastId;
+        },
+
+        // create toast element
         createToast(message, type, toastId) {
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
@@ -324,7 +302,6 @@
                 </button>
             `;
 
-            // FIXED: Add close button listener with proper event handling
             const closeBtn = toast.querySelector('.toast-close');
             closeBtn.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -335,9 +312,61 @@
             return toast;
         },
 
-        /*
-          Get icon SVG path based on type
-         */
+        // create confirmation toast with Yes/No buttons
+        createConfirmToast(message, type, toastId, onConfirm, onCancel) {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-confirm ${type}`;
+            toast.setAttribute('role', 'alertdialog');
+            toast.setAttribute('aria-live', 'assertive');
+            toast.setAttribute('data-toast-id', toastId);
+
+            const iconSvg = this.getIconSvg(type);
+            
+            toast.innerHTML = `
+                <img src="${iconSvg}" alt="" class="toast-icon" aria-hidden="true">
+                <div class="toast-content">
+                    <p class="toast-message">${Utils.sanitize(message)}</p>
+                    <div class="toast-actions">
+                        <button type="button" class="toast-btn toast-btn-confirm">Yes</button>
+                        <button type="button" class="toast-btn toast-btn-cancel">No</button>
+                    </div>
+                </div>
+                <button type="button" class="toast-close" aria-label="Close notification">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                    </svg>
+                </button>
+            `;
+
+            const confirmBtn = toast.querySelector('.toast-btn-confirm');
+            const cancelBtn = toast.querySelector('.toast-btn-cancel');
+            const closeBtn = toast.querySelector('.toast-close');
+
+            confirmBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.remove(toastId);
+                if (onConfirm) onConfirm();
+            });
+
+            cancelBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.remove(toastId);
+                if (onCancel) onCancel();
+            });
+
+            closeBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.remove(toastId);
+                if (onCancel) onCancel();
+            });
+
+            return toast;
+        },
+
+        // get icon SVG path based on type
         getIconSvg(type) {
             const icons = {
                 success: './assets/svgs/check.svg',
@@ -348,20 +377,16 @@
             return icons[type] || icons.info;
         },
 
-        /*
-          Remove toast by ID
-         */
+        // remove toast by ID
         remove(toastId) {
             const toastData = this.activeToasts.get(toastId);
             if (!toastData) return;
 
             const toast = toastData.element;
             
-            // Add removing animation
             toast.classList.remove('show');
             toast.classList.add('removing');
             
-            // Remove from DOM after animation
             setTimeout(() => {
                 if (toast && toast.parentNode) {
                     toast.parentNode.removeChild(toast);
@@ -370,38 +395,366 @@
             }, 300);
         },
 
-        /*
-          Remove duplicate toast by exact message match
-         */
-        removeDuplicateByMessage(message) {
-            // Find and remove any toast with the same message
-            for (const [toastId, toastData] of this.activeToasts.entries()) {
-                if (toastData.message === message) {
-                    this.remove(toastId);
-                }
-            }
-        },
-
-        /*
-         *Clear all toasts
-         */
+        // clear all toasts
         clearAll() {
             const toastIds = Array.from(this.activeToasts.keys());
             toastIds.forEach(id => this.remove(id));
         }
     };
 
-    // Contains all hydration and electrolyte calculation logic
+    // PDF report generator
+    const ReportGenerator = {
+        // generate and download PDF report
+        async generateReport() {
+            try {
+                const { jsPDF } = window.jspdf;
+                
+                if (!jsPDF) {
+                    ToastManager.show('PDF library not loaded. Please refresh the page.', 'error');
+                    return;
+                }
 
+                const data = StorageManager.getData();
+                const profile = data.userProfile || {};
+                const goals = data.dailyGoals || {};
+                const tracking = StorageManager.getTodayTracking();
+
+                if (!goals.water) {
+                    ToastManager.show('Please calculate your requirements first', 'warning');
+                    return;
+                }
+
+                ToastManager.show('Generating PDF report...', 'info', 2000);
+
+                const doc = new jsPDF();
+                const pageWidth = doc.internal.pageSize.getWidth();
+                const pageHeight = doc.internal.pageSize.getHeight();
+                let yPos = 20;
+
+                // colors
+                const primaryColor = [255, 198, 47];
+                const textColor = [26, 26, 26];
+                const secondaryColor = [107, 114, 128];
+                const accentColor = [102, 126, 234];
+
+                // header
+                doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+                doc.rect(0, 0, pageWidth, 40, 'F');
+                
+                doc.setFontSize(28);
+                doc.setTextColor(26, 26, 26);
+                doc.setFont(undefined, 'bold');
+                doc.text('Hydration+ Report', pageWidth / 2, 25, { align: 'center' });
+
+                // subtitle
+                doc.setFontSize(12);
+                doc.setFont(undefined, 'normal');
+                doc.text('Personalized Water & Electrolyte Balance', pageWidth / 2, 33, { align: 'center' });
+
+                yPos = 50;
+
+                // date and time
+                doc.setFontSize(10);
+                doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
+                const reportDate = new Date().toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+                doc.text(`Generated: ${reportDate}`, 15, yPos);
+                yPos += 15;
+
+                // personal information section
+                this.addSectionHeader(doc, 'Personal Information', yPos, accentColor);
+                yPos += 10;
+
+                doc.setFontSize(11);
+                doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+                
+                const personalInfo = [
+                    `Weight: ${profile.weight ? profile.weight.toFixed(1) + ' kg' : 'N/A'}`,
+                    `Age: ${profile.age || 'N/A'} years`,
+                    `Gender: ${profile.gender ? profile.gender.charAt(0).toUpperCase() + profile.gender.slice(1) : 'N/A'}`,
+                    `Activity Level: ${this.formatActivityLevel(profile.activityLevel)}`,
+                    `Exercise: ${profile.exerciseDuration || 0} min/day (${profile.exerciseIntensity || 'medium'} intensity)`,
+                    `Climate: ${this.formatClimate(profile.climate)}`,
+                    `Altitude: ${this.formatAltitude(profile.altitude)}`
+                ];
+
+                personalInfo.forEach(info => {
+                    doc.text(info, 20, yPos);
+                    yPos += 7;
+                });
+
+                yPos += 5;
+
+                // daily requirements section
+                this.addSectionHeader(doc, 'Daily Requirements', yPos, accentColor);
+                yPos += 10;
+
+                // water requirement box
+                doc.setFillColor(102, 126, 234, 0.1);
+                doc.roundedRect(15, yPos - 5, pageWidth - 30, 25, 3, 3, 'F');
+                
+                doc.setFontSize(14);
+                doc.setFont(undefined, 'bold');
+                doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
+                doc.text('Water Intake', 20, yPos + 5);
+                
+                doc.setFontSize(20);
+                doc.text(`${Utils.formatNumber(goals.water)} ml/day`, pageWidth - 20, yPos + 5, { align: 'right' });
+                
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'normal');
+                doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
+                const cups = Math.round(goals.water / 250);
+                doc.text(`Approximately ${cups} cups (250ml each)`, 20, yPos + 14);
+
+                yPos += 35;
+
+                // electrolytes grid
+                doc.setFontSize(12);
+                doc.setFont(undefined, 'bold');
+                doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+                doc.text('Electrolytes', 20, yPos);
+                yPos += 8;
+
+                const electrolytes = [
+                    { name: 'Sodium', value: goals.sodium, unit: 'mg' },
+                    { name: 'Potassium', value: goals.potassium, unit: 'mg' },
+                    { name: 'Magnesium', value: goals.magnesium, unit: 'mg' },
+                    { name: 'Calcium', value: goals.calcium, unit: 'mg' }
+                ];
+
+                const colWidth = (pageWidth - 40) / 2;
+                let col = 0;
+
+                electrolytes.forEach((electrolyte, index) => {
+                    const xPos = 20 + (col * colWidth);
+                    
+                    doc.setFillColor(245, 244, 237);
+                    doc.roundedRect(xPos, yPos - 4, colWidth - 5, 18, 2, 2, 'F');
+                    
+                    doc.setFontSize(11);
+                    doc.setFont(undefined, 'bold');
+                    doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+                    doc.text(electrolyte.name, xPos + 5, yPos + 4);
+                    
+                    doc.setFont(undefined, 'normal');
+                    doc.text(`${Utils.formatNumber(electrolyte.value)} ${electrolyte.unit}`, xPos + 5, yPos + 11);
+                    
+                    col++;
+                    if (col >= 2) {
+                        col = 0;
+                        yPos += 22;
+                    }
+                });
+
+                if (col !== 0) yPos += 22;
+
+                yPos += 5;
+
+                // today's tracking section
+                if (tracking.waterIntake && tracking.waterIntake.length > 0) {
+                    this.addSectionHeader(doc, 'Today\'s Water Tracking', yPos, accentColor);
+                    yPos += 10;
+
+                    const totalIntake = tracking.waterIntake.reduce((sum, entry) => sum + entry.amount, 0);
+                    const percentage = goals.water > 0 ? Math.min((totalIntake / goals.water) * 100, 100) : 0;
+
+                    // progress bar
+                    doc.setFillColor(224, 223, 213);
+                    doc.roundedRect(20, yPos, pageWidth - 40, 12, 2, 2, 'F');
+                    
+                    doc.setFillColor(74, 222, 128);
+                    const progressWidth = ((pageWidth - 40) * percentage) / 100;
+                    doc.roundedRect(20, yPos, progressWidth, 12, 2, 2, 'F');
+                    
+                    doc.setFontSize(10);
+                    doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+                    doc.text(`${Utils.formatNumber(totalIntake)} ml / ${Utils.formatNumber(goals.water)} ml (${Math.round(percentage)}%)`, 
+                        pageWidth / 2, yPos + 8, { align: 'center' });
+
+                    yPos += 20;
+
+                    // all entries
+                    doc.setFontSize(10);
+                    doc.setFont(undefined, 'bold');
+                    doc.text(`Today's Log (${tracking.waterIntake.length} entries):`, 20, yPos);
+                    yPos += 7;
+
+                    doc.setFont(undefined, 'normal');
+                    doc.setFontSize(9);
+                    
+                    const allEntries = [...tracking.waterIntake].reverse();
+                    
+                    allEntries.forEach((entry, index) => {
+                        if (yPos > pageHeight - 30) {
+                            doc.addPage();
+                            yPos = 20;
+                            doc.setFontSize(10);
+                            doc.setFont(undefined, 'bold');
+                            doc.text('Today\'s Log (continued):', 20, yPos);
+                            yPos += 7;
+                            doc.setFont(undefined, 'normal');
+                            doc.setFontSize(9);
+                        }
+                        
+                        doc.text(`${index + 1}. ${entry.amount}ml at ${entry.time}`, 25, yPos);
+                        yPos += 5;
+                    });
+
+                    yPos += 5;
+                }
+
+                // recommendations section
+                const recommendations = Calculator.generateRecommendations(profile, goals.water, {
+                    sodium: goals.sodium,
+                    potassium: goals.potassium,
+                    magnesium: goals.magnesium,
+                    calcium: goals.calcium
+                });
+
+                if (recommendations.length > 0) {
+                    if (yPos > pageHeight - 60) {
+                        doc.addPage();
+                        yPos = 20;
+                    }
+
+                    this.addSectionHeader(doc, 'Personalized Recommendations', yPos, accentColor);
+                    yPos += 10;
+
+                    doc.setFontSize(9);
+                    doc.setFont(undefined, 'normal');
+                    doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+
+                    recommendations.forEach((rec, index) => {
+                        if (yPos > pageHeight - 40) {
+                            doc.addPage();
+                            yPos = 20;
+                            doc.setFontSize(10);
+                            doc.setFont(undefined, 'bold');
+                            doc.text('Recommendations (continued):', 20, yPos);
+                            yPos += 7;
+                            doc.setFont(undefined, 'normal');
+                            doc.setFontSize(9);
+                        }
+
+                        doc.setFillColor(rec.type === 'warning' ? 251 : 255, rec.type === 'warning' ? 191 : 198, rec.type === 'warning' ? 36 : 47);
+                        doc.circle(22, yPos - 1.5, 1.5, 'F');
+                        
+                        const lines = doc.splitTextToSize(rec.text, pageWidth - 50);
+                        lines.forEach((line, lineIndex) => {
+                            doc.text(line, 27, yPos);
+                            yPos += 5;
+                        });
+                        
+                        yPos += 2;
+                    });
+
+                    yPos += 5;
+                }
+
+                // health conditions
+                const healthConditions = [];
+                if (profile.pregnant) healthConditions.push('Pregnant');
+                if (profile.breastfeeding) healthConditions.push('Breastfeeding');
+                if (profile.illness) healthConditions.push('Illness');
+                if (profile.kidneyDisease) healthConditions.push('Kidney Disease');
+
+                if (healthConditions.length > 0) {
+                    if (yPos > pageHeight - 40) {
+                        doc.addPage();
+                        yPos = 20;
+                    }
+
+                    this.addSectionHeader(doc, 'Health Considerations', yPos, accentColor);
+                    yPos += 10;
+
+                    doc.setFontSize(11);
+                    doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+                    doc.text(healthConditions.join(', '), 20, yPos);
+                    yPos += 10;
+                }
+
+                // footer with disclaimer
+                const footerY = pageHeight - 25;
+                doc.setFontSize(8);
+                doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
+                doc.text('Medical Disclaimer: This report provides general hydration guidance only. Always consult with a healthcare', 
+                    pageWidth / 2, footerY, { align: 'center' });
+                doc.text('provider for personalized medical advice, especially if you have health concerns.', 
+                    pageWidth / 2, footerY + 4, { align: 'center' });
+                
+                doc.setFontSize(7);
+                doc.text('Generated by Hydration+ | hydration-tracker.app', 
+                    pageWidth / 2, footerY + 10, { align: 'center' });
+
+                // save PDF
+                const fileName = `Hydration_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+                doc.save(fileName);
+
+                ToastManager.show('Report downloaded successfully!', 'success');
+
+            } catch (error) {
+                console.error('Error generating report:', error);
+                ToastManager.show('Failed to generate report. Please try again.', 'error');
+            }
+        },
+
+        // add section header with styling
+        addSectionHeader(doc, title, yPos, color) {
+            doc.setFillColor(color[0], color[1], color[2], 0.1);
+            doc.rect(15, yPos - 6, doc.internal.pageSize.getWidth() - 30, 12, 'F');
+            
+            doc.setFontSize(13);
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(color[0], color[1], color[2]);
+            doc.text(title, 20, yPos);
+        },
+
+        // format activity level for display
+        formatActivityLevel(level) {
+            const levels = {
+                sedentary: 'Sedentary',
+                light: 'Light',
+                moderate: 'Moderate',
+                active: 'Very Active',
+                athlete: 'Athlete'
+            };
+            return levels[level] || 'Not specified';
+        },
+
+        // format climate for display
+        formatClimate(climate) {
+            const climates = {
+                cool: 'Cool (< 15°C)',
+                moderate: 'Moderate (15-25°C)',
+                hot: 'Hot (25-35°C)',
+                'very-hot': 'Very Hot (> 35°C)'
+            };
+            return climates[climate] || 'Not specified';
+        },
+
+        // format altitude for display
+        formatAltitude(altitude) {
+            const altitudes = {
+                'sea-level': 'Sea Level (0-500m)',
+                moderate: 'Moderate (500-2000m)',
+                high: 'High (> 2000m)'
+            };
+            return altitudes[altitude] || 'Not specified';
+        }
+    };
+
+    // calculation engine
     const Calculator = {
-        /*
-          Calculate water requirements
-         */
+        // calculate water requirements
         calculateWater(params) {
             const {
-                weight, // in kg
+                weight,
                 activityLevel,
-                exerciseDuration, // in minutes
+                exerciseDuration,
                 exerciseIntensity,
                 climate,
                 altitude,
@@ -411,10 +764,10 @@
                 kidneyDisease
             } = params;
 
-            // Base water requirement
+            // base water requirement
             let waterRequirement = weight * CONFIG.BASE_WATER_PER_KG;
 
-            // Activity level multiplier
+            // activity level multiplier
             const activityMultipliers = {
                 sedentary: 1.0,
                 light: 1.1,
@@ -424,7 +777,7 @@
             };
             waterRequirement *= activityMultipliers[activityLevel] || 1.0;
 
-            // Exercise adjustment
+            // exercise adjustment
             const exerciseHours = exerciseDuration / 60;
             const intensityMultipliers = {
                 low: 0.8,
@@ -435,7 +788,7 @@
                 (intensityMultipliers[exerciseIntensity] || 1.0);
             waterRequirement += exerciseWater;
 
-            // Climate adjustment
+            // climate adjustment
             const climateMultipliers = {
                 cool: 1.0,
                 moderate: 1.0,
@@ -444,7 +797,7 @@
             };
             waterRequirement *= climateMultipliers[climate] || 1.0;
 
-            // Altitude adjustment
+            // altitude adjustment
             const altitudeAdditions = {
                 'sea-level': 0,
                 moderate: 500,
@@ -452,42 +805,38 @@
             };
             waterRequirement += altitudeAdditions[altitude] || 0;
 
-            // Health conditions
+            // health conditions
             if (pregnant) waterRequirement += 300;
             if (breastfeeding) waterRequirement += 700;
             if (illness) waterRequirement += 1000;
             if (kidneyDisease) {
-                // Cap at 2000ml for kidney disease
                 waterRequirement = Math.min(waterRequirement, 2000);
             }
 
-            // Apply safety limits
+            // apply safety limits
             waterRequirement = Math.max(CONFIG.MIN_WATER, waterRequirement);
             waterRequirement = Math.min(CONFIG.MAX_WATER, waterRequirement);
 
             return Math.round(waterRequirement);
         },
 
-        /*
-          Calculate electrolyte requirements
-         */
+        // calculate electrolyte requirements
         calculateElectrolytes(params) {
             const {
                 gender,
                 age,
-                weight,
                 exerciseDuration,
                 exerciseIntensity,
                 climate
             } = params;
 
-            // Base requirements
+            // base requirements
             let sodium = 2000;
             let potassium = gender === 'male' ? 3400 : 2600;
             let magnesium = gender === 'male' ? CONFIG.MAGNESIUM.male : CONFIG.MAGNESIUM.female;
             let calcium = age >= 65 ? CONFIG.CALCIUM.senior : CONFIG.CALCIUM.young;
 
-            // Exercise adjustments (sweat loss)
+            // exercise adjustments
             const exerciseHours = exerciseDuration / 60;
             const intensityMultipliers = {
                 low: 0.5,
@@ -496,13 +845,11 @@
             };
             const sweatMultiplier = intensityMultipliers[exerciseIntensity] || 1.0;
             
-            // Sodium loss in sweat (500-7000mg per hour depending on intensity)
+            // sodium loss in sweat
             sodium += exerciseHours * 1000 * sweatMultiplier;
-
-            // Potassium loss in sweat
             potassium += exerciseHours * 200 * sweatMultiplier;
 
-            // Climate adjustments
+            // climate adjustments
             const climateMultipliers = {
                 cool: 1.0,
                 moderate: 1.0,
@@ -513,7 +860,7 @@
             sodium *= climateMultiplier;
             potassium *= climateMultiplier;
 
-            // Cap at danger levels
+            // cap at danger levels
             sodium = Math.min(sodium, CONFIG.SODIUM.danger - 100);
             potassium = Math.min(potassium, CONFIG.POTASSIUM.danger - 100);
             magnesium = Math.min(magnesium, CONFIG.MAGNESIUM.danger - 100);
@@ -527,19 +874,17 @@
             };
         },
 
-        /*
-          Generate personalized recommendations
-         */
+        // generate personalized recommendations
         generateRecommendations(params, waterRequirement, electrolytes) {
             const recommendations = [];
 
-            // Water distribution
+            // water distribution
             recommendations.push({
                 type: 'info',
                 text: `Distribute your ${Utils.formatNumber(waterRequirement)}ml throughout the day. Aim for ${Math.round(waterRequirement / 8)}ml every 1-2 hours while awake.`
             });
 
-            // High water warning
+            // high water warning
             if (waterRequirement >= CONFIG.DANGER_WATER) {
                 recommendations.push({
                     type: 'warning',
@@ -547,7 +892,7 @@
                 });
             }
 
-            // Kidney disease warning
+            // kidney disease warning
             if (params.kidneyDisease) {
                 recommendations.push({
                     type: 'warning',
@@ -555,7 +900,7 @@
                 });
             }
 
-            // Exercise-specific advice
+            // exercise-specific advice
             if (params.exerciseDuration > 60) {
                 recommendations.push({
                     type: 'info',
@@ -563,7 +908,7 @@
                 });
             }
 
-            // Climate advice
+            // climate advice
             if (params.climate === 'hot' || params.climate === 'very-hot') {
                 recommendations.push({
                     type: 'warning',
@@ -571,7 +916,7 @@
                 });
             }
 
-            // Sodium advice
+            // sodium advice
             if (electrolytes.sodium > 3000) {
                 recommendations.push({
                     type: 'info',
@@ -579,13 +924,13 @@
                 });
             }
 
-            // Potassium-rich foods
+            // potassium-rich foods
             recommendations.push({
                 type: 'info',
                 text: `Potassium sources: bananas, sweet potatoes, spinach, avocado, beans. Target: ${Utils.formatNumber(electrolytes.potassium)}mg/day.`
             });
 
-            // Magnesium sources
+            // magnesium sources
             recommendations.push({
                 type: 'info',
                 text: `Magnesium sources: almonds, spinach, black beans, dark chocolate, pumpkin seeds. Target: ${electrolytes.magnesium}mg/day.`
@@ -594,23 +939,21 @@
             return recommendations;
         },
 
-        /*
-          Validate inconsistencies in user input
-         */
+        // validate inconsistencies in user input
         validateConsistency(params) {
             const warnings = [];
 
-            // Sedentary with high exercise
+            // sedentary with high exercise
             if (params.activityLevel === 'sedentary' && params.exerciseDuration > 60) {
                 warnings.push('You selected "Sedentary" but indicated significant exercise. Consider selecting a higher activity level.');
             }
 
-            // Very young with intense exercise
+            // very young with intense exercise
             if (params.age < 12 && params.exerciseIntensity === 'high') {
                 warnings.push('High-intensity exercise for children under 12 should be supervised. Consult a pediatrician.');
             }
 
-            // Multiple health conditions
+            // multiple health conditions
             const healthConditions = [
                 params.pregnant,
                 params.breastfeeding,
@@ -626,35 +969,26 @@
         }
     };
 
-   // Responsible for validating form inputs
-
+    // form validator
     const FormValidator = {
-        /*
-          Validate weight input
-         */
+        // validate weight input
         validateWeight(weight, unit) {
             const min = unit === 'kg' ? 20 : 44;
             const max = unit === 'kg' ? 300 : 661;
             return Utils.validateNumber(weight, min, max);
         },
 
-        /*
-          Validate age input
-         */
+        // validate age input
         validateAge(age) {
             return Utils.validateNumber(age, 1, 120);
         },
 
-        /*
-          Validate exercise duration
-         */
+        // validate exercise duration
         validateExerciseDuration(duration) {
             return Utils.validateNumber(duration, 0, 1440);
         },
 
-        /*
-          Show error message
-         */
+        // show error message
         showError(elementId, message) {
             const errorElement = document.getElementById(`${elementId}-error`);
             if (errorElement) {
@@ -663,9 +997,7 @@
             }
         },
 
-        /*
-          Clear error message
-         */
+        // clear error message
         clearError(elementId) {
             const errorElement = document.getElementById(`${elementId}-error`);
             if (errorElement) {
@@ -674,13 +1006,11 @@
             }
         },
 
-        /*
-          Validate all form inputs
-         */
+        // validate all form inputs
         validateForm() {
             let isValid = true;
 
-            // Validate weight
+            // validate weight
             const weight = document.getElementById('weight').value;
             const weightUnit = document.querySelector('.unit-btn.active').dataset.unit;
             const weightValidation = this.validateWeight(weight, weightUnit);
@@ -692,7 +1022,7 @@
                 this.clearError('weight');
             }
 
-            // Validate age
+            // validate age
             const age = document.getElementById('age').value;
             const ageValidation = this.validateAge(age);
             
@@ -703,7 +1033,7 @@
                 this.clearError('age');
             }
 
-            // Required fields
+            // required fields
             const requiredFields = ['gender', 'activity-level', 'climate'];
             requiredFields.forEach(fieldId => {
                 const field = document.getElementById(fieldId);
@@ -717,13 +1047,9 @@
         }
     };
 
-  // Handles UI updates and user interactions
-
-
+    // UI manager
     const UIManager = {
-        /**
-         * Initialize UI event listeners
-         */
+        // initialize UI event listeners
         init() {
             this.setupWeightToggle();
             this.setupCalculateButton();
@@ -731,16 +1057,13 @@
             this.loadSavedData();
         },
 
-        /**
-         * Setup weight unit toggle
-         */
+        // setup weight unit toggle
         setupWeightToggle() {
             const toggleButtons = document.querySelectorAll('.unit-btn');
             const weightInput = document.getElementById('weight');
 
             toggleButtons.forEach(btn => {
                 btn.addEventListener('click', () => {
-                    // Update active state
                     toggleButtons.forEach(b => {
                         b.classList.remove('active');
                         b.setAttribute('aria-pressed', 'false');
@@ -748,12 +1071,9 @@
                     btn.classList.add('active');
                     btn.setAttribute('aria-pressed', 'true');
 
-                    // Convert weight value
                     const currentValue = parseFloat(weightInput.value);
                     if (!isNaN(currentValue) && currentValue > 0) {
                         const newUnit = btn.dataset.unit;
-                        const oldUnit = newUnit === 'kg' ? 'lbs' : 'kg';
-                        
                         let convertedValue;
                         if (newUnit === 'kg') {
                             convertedValue = currentValue * CONFIG.LBS_TO_KG;
@@ -767,39 +1087,50 @@
             });
         },
 
-        /*
-         Setup calculate button
-         */
+        // setup calculate button
         setupCalculateButton() {
             const calculateBtn = document.getElementById('calculate-btn');
             const clearFormBtn = document.getElementById('clear-form-btn');
             const resetSettingsBtn = document.getElementById('reset-settings-btn');
+            const downloadReportBtn = document.getElementById('download-report-btn');
             
             calculateBtn.addEventListener('click', () => {
                 this.handleCalculate();
             });
 
-            // Clear Form Button - clears only form inputs
+            // clear form button
             clearFormBtn.addEventListener('click', () => {
-                if (confirm('Clear all form inputs? This will not delete your saved data.')) {
-                    this.clearForm();
-                    ToastManager.show('Form cleared successfully', 'success');
-                }
+                ToastManager.showConfirm(
+                    'Clear all form inputs? This will not delete your saved data.',
+                    () => {
+                        this.clearForm();
+                        ToastManager.show('Form cleared successfully', 'success');
+                    },
+                    null,
+                    'info'
+                );
             });
 
-            // Reset Settings Button - clears everything
+            // reset settings button
             resetSettingsBtn.addEventListener('click', () => {
-                if (confirm('Reset all settings and clear saved data? This action cannot be undone.')) {
-                    this.resetAllSettings();
-                }
+                ToastManager.showConfirm(
+                    'Reset all settings and clear saved data? This action cannot be undone.',
+                    () => {
+                        this.resetAllSettings();
+                    },
+                    null,
+                    'warning'
+                );
+            });
+
+            // download report button
+            downloadReportBtn.addEventListener('click', () => {
+                ReportGenerator.generateReport();
             });
         },
 
-        /*
-          Clear form inputs only
-         */
+        // clear form inputs only
         clearForm() {
-            // Reset all form inputs to default
             document.getElementById('weight').value = '';
             document.getElementById('age').value = '';
             document.getElementById('gender').value = '';
@@ -809,13 +1140,13 @@
             document.getElementById('climate').value = 'moderate';
             document.getElementById('altitude').value = 'sea-level';
             
-            // Uncheck all health conditions
+            // uncheck all health conditions
             document.getElementById('pregnant').checked = false;
             document.getElementById('breastfeeding').checked = false;
             document.getElementById('illness').checked = false;
             document.getElementById('kidney-disease').checked = false;
 
-            // Reset weight unit to kg
+            // reset weight unit to kg
             const kgBtn = document.querySelector('.unit-btn[data-unit="kg"]');
             const lbsBtn = document.querySelector('.unit-btn[data-unit="lbs"]');
             kgBtn.classList.add('active');
@@ -823,93 +1154,69 @@
             lbsBtn.classList.remove('active');
             lbsBtn.setAttribute('aria-pressed', 'false');
 
-            // Clear error messages
+            // clear error messages
             FormValidator.clearError('weight');
             FormValidator.clearError('age');
 
-            // Hide results and tracker sections
+            // hide results and tracker sections
             document.getElementById('results-section').style.display = 'none';
             document.getElementById('tracker-section').style.display = 'none';
         },
 
-        /*
-          Reset all settings and clear all data
-         */
+        // reset all settings and clear all data
         resetAllSettings() {
-            // Clear form
             this.clearForm();
-
-            // Clear all localStorage data
             StorageManager.saveData(StorageManager.getDefaultData());
-
-            // Clear toasts
             ToastManager.clearAll();
-
-            // Reset UI
             document.getElementById('results-section').style.display = 'none';
             document.getElementById('tracker-section').style.display = 'none';
-
-            // Show success message
             ToastManager.show('All settings and data have been reset', 'success');
-
-            // Scroll to top
             window.scrollTo({ top: 0, behavior: 'smooth' });
         },
 
-        /*
-          Handle calculation
-         */
+        // handle calculation
         handleCalculate() {
-            // Validate form
             if (!FormValidator.validateForm()) {
                 return;
             }
 
-            // Gather form data
             const params = this.gatherFormData();
 
-            // Validate consistency
+            // validate consistency
             const warnings = Calculator.validateConsistency(params);
             warnings.forEach(warning => {
                 ToastManager.show(warning, 'warning', 6000);
             });
 
-            // Calculate requirements
+            // calculate requirements
             const waterRequirement = Calculator.calculateWater(params);
             const electrolytes = Calculator.calculateElectrolytes(params);
             const recommendations = Calculator.generateRecommendations(params, waterRequirement, electrolytes);
 
-            // Save to storage
+            // save to storage
             StorageManager.saveProfile(params);
             StorageManager.saveGoals({
                 water: waterRequirement,
                 ...electrolytes
             });
 
-            // Display results
+            // display results
             this.displayResults(waterRequirement, electrolytes, recommendations);
-
-            // Initialize tracking
             this.initializeTracking(waterRequirement);
 
-            // Show success message
             ToastManager.show('Requirements calculated successfully!', 'success');
-
-            // Scroll to results
             document.getElementById('results-section').scrollIntoView({ 
                 behavior: 'smooth', 
                 block: 'start' 
             });
         },
 
-        /*
-          Gather form data
-         */
+        // gather form data
         gatherFormData() {
             const weightInput = document.getElementById('weight').value;
             const weightUnit = document.querySelector('.unit-btn.active').dataset.unit;
             
-            // Convert weight to kg
+            // convert weight to kg
             let weight = parseFloat(weightInput);
             if (weightUnit === 'lbs') {
                 weight *= CONFIG.LBS_TO_KG;
@@ -931,26 +1238,23 @@
             };
         },
 
-        /*
-          Display calculation results
-         */
+        // display calculation results
         displayResults(waterRequirement, electrolytes, recommendations) {
-            // Show results section
             const resultsSection = document.getElementById('results-section');
             resultsSection.style.display = 'block';
 
-            // Display water requirement
+            // display water requirement
             document.getElementById('water-amount').textContent = Utils.formatNumber(waterRequirement);
             const cups = Math.round(waterRequirement / 250);
             document.getElementById('water-cups').textContent = `${cups} cups (250ml each)`;
 
-            // Display electrolytes
+            // display electrolytes
             document.getElementById('sodium-amount').textContent = Utils.formatNumber(electrolytes.sodium);
             document.getElementById('potassium-amount').textContent = Utils.formatNumber(electrolytes.potassium);
             document.getElementById('magnesium-amount').textContent = electrolytes.magnesium;
             document.getElementById('calcium-amount').textContent = Utils.formatNumber(electrolytes.calcium);
 
-            // Display recommendations
+            // display recommendations
             const recommendationsContainer = document.getElementById('recommendations');
             recommendationsContainer.innerHTML = recommendations.map(rec => `
                 <div class="recommendation-item">
@@ -960,31 +1264,27 @@
             `).join('');
         },
 
-        /*
-          Initialize tracking section
-         */
+        // initialize tracking section
         initializeTracking(waterRequirement) {
             const trackerSection = document.getElementById('tracker-section');
             trackerSection.style.display = 'block';
 
-            // Update target
+            // update target
             document.getElementById('target-intake').textContent = `/ ${Utils.formatNumber(waterRequirement)} ml`;
 
-            // Load today's tracking
+            // load today's tracking
             const todayData = StorageManager.getTodayTracking();
             this.updateTrackingUI(todayData, waterRequirement);
         },
 
-        /*
-          Setup tracking functionality
-         */
+        // setup tracking functionality
         setupTracking() {
             const addIntakeBtn = document.getElementById('add-intake-btn');
             const intakeInput = document.getElementById('intake-amount');
             const quickBtns = document.querySelectorAll('.quick-btn');
             const resetBtn = document.getElementById('reset-tracker-btn');
 
-            // Add intake button
+            // add intake button
             addIntakeBtn.addEventListener('click', () => {
                 const amount = parseInt(intakeInput.value);
                 if (this.validateIntakeAmount(amount)) {
@@ -993,14 +1293,14 @@
                 }
             });
 
-            // Enter key on input
+            // enter key on input
             intakeInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     addIntakeBtn.click();
                 }
             });
 
-            // Quick add buttons
+            // quick add buttons
             quickBtns.forEach(btn => {
                 btn.addEventListener('click', () => {
                     const amount = parseInt(btn.dataset.amount);
@@ -1008,19 +1308,22 @@
                 });
             });
 
-            // Reset button
+            // reset button
             resetBtn.addEventListener('click', () => {
-                if (confirm('Are you sure you want to reset today\'s tracking?')) {
-                    StorageManager.resetTodayTracking();
-                    this.updateTrackingUI({ waterIntake: [] }, this.getCurrentGoal());
-                    ToastManager.show('Tracking reset successfully', 'success');
-                }
+                ToastManager.showConfirm(
+                    'Are you sure you want to reset today\'s tracking?',
+                    () => {
+                        StorageManager.resetTodayTracking();
+                        this.updateTrackingUI({ waterIntake: [] }, this.getCurrentGoal());
+                        ToastManager.show('Tracking reset successfully', 'success');
+                    },
+                    null,
+                    'warning'
+                );
             });
         },
 
-        /*
-          Validate intake amount
-         */
+        // validate intake amount
         validateIntakeAmount(amount) {
             if (isNaN(amount) || amount <= 0) {
                 ToastManager.show('Please enter a valid amount', 'error');
@@ -1035,9 +1338,7 @@
             return true;
         },
 
-        /*
-          Add water intake
-         */
+        // add water intake
         addIntake(amount) {
             const todayData = StorageManager.getTodayTracking();
             
@@ -1056,9 +1357,7 @@
             ToastManager.show(`Added ${amount}ml to your intake`, 'success');
         },
 
-        /*
-          Delete water intake entry
-         */
+        // delete water intake entry
         deleteIntake(index) {
             const todayData = StorageManager.getTodayTracking();
             todayData.waterIntake.splice(index, 1);
@@ -1067,14 +1366,12 @@
             ToastManager.show('Entry deleted', 'info');
         },
 
-        /*
-          Update tracking UI
-         */
+        // update tracking UI
         updateTrackingUI(todayData, goal) {
             const waterIntake = todayData.waterIntake || [];
             const totalIntake = waterIntake.reduce((sum, entry) => sum + entry.amount, 0);
 
-            // Update progress
+            // update progress
             document.getElementById('current-intake').textContent = `${Utils.formatNumber(totalIntake)} ml`;
             
             const progressPercentage = goal > 0 ? Math.min((totalIntake / goal) * 100, 100) : 0;
@@ -1084,18 +1381,16 @@
             progressFill.style.width = `${progressPercentage}%`;
             progressFill.setAttribute('aria-valuenow', Math.round(progressPercentage));
 
-            // Update intake list
+            // update intake list
             this.updateIntakeList(waterIntake);
 
-            // Check if goal reached
+            // check if goal reached
             if (totalIntake >= goal && goal > 0) {
                 ToastManager.show('Congratulations! You\'ve reached your daily water goal!', 'success', 6000);
             }
         },
 
-        /*
-          Update intake list
-         */
+        // update intake list
         updateIntakeList(waterIntake) {
             const intakeList = document.getElementById('intake-list');
             
@@ -1104,7 +1399,7 @@
                 return;
             }
 
-            // Sort by timestamp (newest first)
+            // sort by timestamp (newest first)
             const sortedIntake = [...waterIntake].sort((a, b) => 
                 new Date(b.timestamp) - new Date(a.timestamp)
             );
@@ -1123,7 +1418,7 @@
                 </div>
             `).join('');
 
-            // Add delete listeners
+            // add delete listeners
             intakeList.querySelectorAll('.delete-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const index = parseInt(btn.dataset.index);
@@ -1132,17 +1427,13 @@
             });
         },
 
-        /*
-          Get current water goal
-         */
+        // get current water goal
         getCurrentGoal() {
             const data = StorageManager.getData();
             return data.dailyGoals?.water || 0;
         },
 
-        /*
-          Load saved data on page load
-         */
+        // load saved data on page load
         loadSavedData() {
             const data = StorageManager.getData();
             
@@ -1165,11 +1456,9 @@
             }
         },
 
-        /*
-          Populate form with saved data
-         */
+        // populate form with saved data
         populateForm(profile) {
-            // Weight - store in kg, display in user's preferred unit
+            // weight
             const weightUnit = document.querySelector('.unit-btn.active').dataset.unit;
             let displayWeight = profile.weight;
             if (weightUnit === 'lbs') {
@@ -1177,7 +1466,7 @@
             }
             document.getElementById('weight').value = displayWeight.toFixed(1);
 
-            // Other fields
+            // other fields
             if (profile.age) document.getElementById('age').value = profile.age;
             if (profile.gender) document.getElementById('gender').value = profile.gender;
             if (profile.activityLevel) document.getElementById('activity-level').value = profile.activityLevel;
@@ -1186,7 +1475,7 @@
             if (profile.climate) document.getElementById('climate').value = profile.climate;
             if (profile.altitude) document.getElementById('altitude').value = profile.altitude;
 
-            // Checkboxes
+            // checkboxes
             document.getElementById('pregnant').checked = profile.pregnant || false;
             document.getElementById('breastfeeding').checked = profile.breastfeeding || false;
             document.getElementById('illness').checked = profile.illness || false;
@@ -1194,67 +1483,44 @@
         }
     };
 
-  
-    // INITIALIZATION
-  
-
-    /*
-      Initialize application when DOM is ready
-     */
+    // initialization
     function initializeApp() {
-        // Initialize managers
         ToastManager.init();
         UIManager.init();
-
-        // Check for midnight rollover
         checkMidnightRollover();
-
         console.log('Water + Electrolyte Balance Tool initialized successfully');
     }
 
-   // Detects day change and ensures tracking reflects the correct date
-
+    // check for date change and reset tracking if needed
     function checkMidnightRollover() {
         const lastDate = localStorage.getItem('last_active_date');
         const currentDate = Utils.getDateString();
 
         if (lastDate && lastDate !== currentDate) {
-            // Date has changed - tracking will automatically use new date
             console.log('New day detected - tracking reset');
         }
 
         localStorage.setItem('last_active_date', currentDate);
     }
 
-
-    // EVENT LISTENERS
-    
-
-    // Initialize when DOM is ready
+    // event listeners
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initializeApp);
     } else {
         initializeApp();
     }
 
-    // Handle page visibility changes
+    // handle page visibility changes
     document.addEventListener('visibilitychange', () => {
         if (!document.hidden) {
             checkMidnightRollover();
             
-            // Refresh tracking UI if goals exist
             const goal = UIManager.getCurrentGoal();
             if (goal > 0) {
                 const todayData = StorageManager.getTodayTracking();
                 UIManager.updateTrackingUI(todayData, goal);
             }
         }
-    });
-
-    // Handle window beforeunload
-    window.addEventListener('beforeunload', () => {
-        // Cleanup if needed
-        console.log('Page unloading - data saved');
     });
 
 })();
