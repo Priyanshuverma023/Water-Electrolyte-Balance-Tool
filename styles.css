@@ -376,6 +376,30 @@ body {
     transform: translateY(-2px);
 }
 
+.btn-secondary-outline {
+    background: transparent;
+    color: var(--text-primary);
+    border: 2px solid var(--border);
+    padding: 12px 24px;
+}
+
+.btn-secondary-outline:hover:not(:disabled) {
+    border-color: var(--secondary-bg);
+    background: rgba(255, 198, 47, 0.1);
+}
+
+.btn-danger-outline {
+    background: transparent;
+    color: var(--error);
+    border: 2px solid var(--error);
+    padding: 12px 24px;
+}
+
+.btn-danger-outline:hover:not(:disabled) {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: #dc2626;
+}
+
 .btn-text {
     background: transparent;
     color: var(--text-secondary);
@@ -388,9 +412,25 @@ body {
     background: rgba(0, 0, 0, 0.05);
 }
 
+/* Action Buttons Container */
+.action-buttons {
+    margin-top: var(--spacing-md);
+}
+
 #calculate-btn {
     width: 100%;
-    margin-top: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.secondary-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+.secondary-actions .btn {
+    flex: 1;
+    min-width: 140px;
 }
 
 .quick-btn {
@@ -759,9 +799,7 @@ body {
     top: 20px;
     right: 20px;
     z-index: 9999;
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-sm);
+    pointer-events: none;
     max-width: 400px;
 }
 
@@ -773,37 +811,34 @@ body {
     display: flex;
     align-items: center;
     gap: var(--spacing-md);
-    animation: toastSlideIn var(--transition-base);
     border-left: 4px solid;
     min-width: 300px;
+    pointer-events: auto;
+    
+    /* CRITICAL: Overlapping positioning */
+    position: absolute;
+    top: 0;
+    right: 0;
+    
+    /* Start invisible */
+    opacity: 0;
+    transform: translateX(400px) scale(0.9);
+    transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-@keyframes toastSlideIn {
-    from {
-        opacity: 0;
-        transform: translateX(100%);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
+/* Show animation */
+.toast.show {
+    opacity: 1;
+    transform: translateX(0) scale(1);
 }
 
+/* Remove animation */
 .toast.removing {
-    animation: toastSlideOut var(--transition-base);
+    opacity: 0;
+    transform: translateX(400px) scale(0.9);
 }
 
-@keyframes toastSlideOut {
-    from {
-        opacity: 1;
-        transform: translateX(0);
-    }
-    to {
-        opacity: 0;
-        transform: translateX(100%);
-    }
-}
-
+/* Toast type colors */
 .toast.success {
     border-color: var(--success);
 }
@@ -828,12 +863,15 @@ body {
 
 .toast-content {
     flex: 1;
+    min-width: 0;
 }
 
 .toast-message {
     font-size: var(--fs-12-16);
     color: var(--text-primary);
     font-weight: 500;
+    margin: 0;
+    word-wrap: break-word;
 }
 
 .toast-close {
@@ -847,11 +885,16 @@ body {
     justify-content: center;
     border-radius: var(--radius-sm);
     transition: all var(--transition-fast);
+    flex-shrink: 0;
 }
 
 .toast-close:hover {
     background: rgba(0, 0, 0, 0.05);
     color: var(--text-primary);
+}
+
+.toast-close:active {
+    transform: scale(0.95);
 }
 
 /* ========================================
@@ -891,6 +934,173 @@ body {
     display: inline-block;
 }
 
+/* Form Label Icons - Warm accent color matching secondary-bg */
+.form-label .icon {
+    filter: invert(71%) sepia(66%) saturate(478%) hue-rotate(358deg) brightness(101%) contrast(101%);
+    /* This creates a warm orange/yellow tone matching #ffc62f */
+    opacity: 0.9;
+    transition: all var(--transition-fast);
+}
+
+.form-label:hover .icon {
+    opacity: 1;
+    filter: invert(66%) sepia(95%) saturate(478%) hue-rotate(358deg) brightness(105%) contrast(101%);
+    transform: scale(1.1);
+}
+
+/* Result Icon - White color for gradient backgrounds */
+.result-icon {
+    width: 40px;
+    height: 40px;
+    filter: brightness(0) invert(1);
+    /* Pure white for gradient backgrounds */
+}
+
+/* Toast Icons - Colored based on toast type */
+.toast-icon {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+}
+
+.toast.success .toast-icon {
+    filter: invert(70%) sepia(50%) saturate(500%) hue-rotate(80deg) brightness(100%) contrast(90%);
+    /* Green tone matching --success: #4ade80 */
+}
+
+.toast.error .toast-icon,
+.toast.warning .toast-icon {
+    filter: invert(56%) sepia(98%) saturate(1975%) hue-rotate(336deg) brightness(101%) contrast(95%);
+    /* Red/Orange tone matching --error: #ef4444 */
+}
+
+.toast.info .toast-icon {
+    filter: invert(48%) sepia(79%) saturate(2476%) hue-rotate(200deg) brightness(100%) contrast(95%);
+    /* Blue tone matching --info: #3b82f6 */
+}
+
+/* Recommendation Icons */
+.recommendation-icon {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.recommendation-icon.info {
+    filter: invert(71%) sepia(66%) saturate(478%) hue-rotate(358deg) brightness(101%) contrast(101%);
+    /* Warm yellow matching secondary-bg */
+}
+
+.recommendation-icon.warning {
+    filter: invert(56%) sepia(98%) saturate(1975%) hue-rotate(336deg) brightness(101%) contrast(95%);
+    /* Orange/red for warnings */
+}
+
+/* Disclaimer Icon - Info blue */
+.disclaimer .icon {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    filter: invert(48%) sepia(79%) saturate(2476%) hue-rotate(200deg) brightness(100%) contrast(95%);
+    /* Blue tone for informational content */
+}
+
+/* Delete Button Icons - Subtle gray, red on hover */
+.delete-btn svg {
+    transition: all var(--transition-fast);
+    color: var(--text-secondary);
+}
+
+.delete-btn:hover svg {
+    color: var(--error);
+    transform: scale(1.1);
+}
+
+/* Close Button Icons - Subtle gray, darker on hover */
+.toast-close svg {
+    transition: all var(--transition-fast);
+}
+
+.toast-close:hover svg {
+    transform: rotate(90deg) scale(1.1);
+}
+
+/* Specific Icon Colors for Different Contexts */
+
+/* User/Profile Icon - Purple accent */
+img[src*="user.svg"] {
+    filter: invert(42%) sepia(93%) saturate(500%) hue-rotate(230deg) brightness(100%) contrast(90%);
+}
+
+/* Age Icon - Coral/pink accent */
+img[src*="age.svg"] {
+    filter: invert(60%) sepia(35%) saturate(1500%) hue-rotate(320deg) brightness(100%) contrast(90%);
+}
+
+/* Gender Icon - Purple accent */
+img[src*="gender.svg"] {
+    filter: invert(42%) sepia(93%) saturate(500%) hue-rotate(230deg) brightness(100%) contrast(90%);
+}
+
+/* Activity Icon - Energetic orange */
+img[src*="activity.svg"] {
+    filter: invert(56%) sepia(98%) saturate(1975%) hue-rotate(10deg) brightness(101%) contrast(95%);
+}
+
+/* Exercise Duration Icon - Blue accent */
+img[src*="exercise-duration.svg"] {
+    filter: invert(48%) sepia(79%) saturate(2476%) hue-rotate(200deg) brightness(100%) contrast(95%);
+}
+
+/* Exercise Intensity Icon - Red/orange for intensity */
+img[src*="exercise-intensity.svg"] {
+    filter: invert(56%) sepia(98%) saturate(1975%) hue-rotate(336deg) brightness(101%) contrast(95%);
+}
+
+/* Temperature Icon - Warm red tone */
+img[src*="temperature.svg"] {
+    filter: invert(56%) sepia(98%) saturate(1975%) hue-rotate(336deg) brightness(101%) contrast(95%);
+}
+
+/* Altitude Icon - Mountain blue */
+img[src*="altitude.svg"] {
+    filter: invert(48%) sepia(79%) saturate(2476%) hue-rotate(200deg) brightness(100%) contrast(95%);
+}
+
+/* Water Drop Icon - Cyan/blue water color */
+img[src*="water-drop.svg"] {
+    filter: invert(48%) sepia(79%) saturate(2476%) hue-rotate(180deg) brightness(100%) contrast(95%);
+}
+
+/* Check/Success Icon - Green */
+img[src*="check.svg"] {
+    filter: invert(70%) sepia(50%) saturate(500%) hue-rotate(80deg) brightness(100%) contrast(90%);
+}
+
+/* Warning Icon - Orange/yellow */
+img[src*="warning.svg"] {
+    filter: invert(71%) sepia(66%) saturate(478%) hue-rotate(358deg) brightness(101%) contrast(101%);
+}
+
+/* Info Icon - Blue */
+img[src*="info.svg"] {
+    filter: invert(48%) sepia(79%) saturate(2476%) hue-rotate(200deg) brightness(100%) contrast(95%);
+}
+
+/* Icon Hover Effects - Brighten on hover */
+.form-label:hover img[src*=".svg"],
+.checkbox-label:hover .icon {
+    filter: brightness(1.2);
+    transform: scale(1.05);
+}
+
+/* Icon Animation on Active State */
+.form-label:active .icon,
+.btn:active .icon {
+    transform: scale(0.95);
+}
+
 /* ========================================
    RESPONSIVE
    ======================================== */
@@ -920,6 +1130,14 @@ body {
         width: 100%;
     }
 
+    .secondary-actions {
+        flex-direction: column;
+    }
+
+    .secondary-actions .btn {
+        width: 100%;
+    }
+
     #toast-container {
         left: 20px;
         right: 20px;
@@ -928,6 +1146,8 @@ body {
 
     .toast {
         min-width: auto;
+        right: auto;
+        left: 0;
     }
 }
 

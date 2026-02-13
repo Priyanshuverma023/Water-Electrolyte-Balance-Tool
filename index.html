@@ -120,7 +120,7 @@
                     <!-- Exercise Intensity -->
                     <div class="form-group">
                         <label for="exercise-intensity" class="form-label">
-                            <img src="./assets/svgs/excercise-intensity.svg" alt="" class="icon" aria-hidden="true">
+                            <img src="./assets//svgs/excercise-intensity.svg" alt="" class="icon" aria-hidden="true">
                             <span>Exercise Intensity</span>
                         </label>
                         <select id="exercise-intensity" class="form-select">
@@ -182,10 +182,20 @@
                     </div>
                 </div>
 
-                <!-- Calculate Button -->
-                <button id="calculate-btn" class="btn btn-primary" type="button">
-                    Calculate Requirements
-                </button>
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button id="calculate-btn" class="btn btn-primary" type="button">
+                        Calculate Requirements
+                    </button>
+                    <div class="secondary-actions">
+                        <button id="clear-form-btn" class="btn btn-secondary-outline" type="button">
+                            Clear Form
+                        </button>
+                        <button id="reset-settings-btn" class="btn btn-danger-outline" type="button">
+                            Reset All Data
+                        </button>
+                    </div>
+                </div>
             </section>
 
             <!-- Results Section -->

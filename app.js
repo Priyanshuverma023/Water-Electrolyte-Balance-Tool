@@ -274,6 +274,7 @@
     const ToastManager = {
         container: null,
         activeToasts: new Map(),
+        toastQueue: [],
 
         /**
          * Initialize toast container
@@ -291,20 +292,28 @@
         show(message, type = 'info', duration = CONFIG.TOAST_DURATION) {
             if (!this.container) return;
 
-            // Remove duplicate messages
-            this.removeDuplicate(message);
-
-            // Limit number of toasts
-            if (this.activeToasts.size >= CONFIG.MAX_TOASTS) {
-                const firstKey = this.activeToasts.keys().next().value;
-                this.remove(firstKey);
+            // CRITICAL: Remove existing toast with same message
+           const existingToastIds = Array.from(this.activeToasts.keys());
+           existingToastIds.forEach(id => {
+            const toastData = this.activeToasts.get(id);
+            if(toastData && toastData.element && toastData.element.parentNode) {
+                toastData.element.parentNode.removeChild(toastData.element);
             }
+            this.activeToasts.delete(id);
+           })
+           
 
-            const toast = this.createToast(message, type);
-            const toastId = Date.now().toString();
+            const toastId = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            const toast = this.createToast(message, type, toastId);
             
+            // Add to container (will stack with CSS)
             this.container.appendChild(toast);
-            this.activeToasts.set(toastId, toast);
+            this.activeToasts.set(toastId, { element: toast, message: message });
+
+            // Trigger animation
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 10);
 
             // Auto-dismiss
             if (duration > 0) {
@@ -317,11 +326,12 @@
         /**
          * Create toast element
          */
-        createToast(message, type) {
+        createToast(message, type, toastId) {
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
             toast.setAttribute('role', 'alert');
             toast.setAttribute('aria-live', 'polite');
+            toast.setAttribute('data-toast-id', toastId);
 
             const iconSvg = this.getIconSvg(type);
             
@@ -330,19 +340,19 @@
                 <div class="toast-content">
                     <p class="toast-message">${Utils.sanitize(message)}</p>
                 </div>
-                <button class="toast-close" aria-label="Close notification">
+                <button type="button" class="toast-close" aria-label="Close notification">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                         <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
                     </svg>
                 </button>
             `;
 
-            // Add close button listener
+            // FIXED: Add close button listener with proper event handling
             const closeBtn = toast.querySelector('.toast-close');
-            closeBtn.addEventListener('click', () => {
-                const toastId = Array.from(this.activeToasts.entries())
-                    .find(([_, t]) => t === toast)?.[0];
-                if (toastId) this.remove(toastId);
+            closeBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.remove(toastId);
             });
 
             return toast;
@@ -362,31 +372,45 @@
         },
 
         /**
-         * Remove toast
+         * Remove toast by ID
          */
         remove(toastId) {
-            const toast = this.activeToasts.get(toastId);
-            if (!toast) return;
+            const toastData = this.activeToasts.get(toastId);
+            if (!toastData) return;
 
+            const toast = toastData.element;
+            
+            // Add removing animation
+            toast.classList.remove('show');
             toast.classList.add('removing');
+            
+            // Remove from DOM after animation
             setTimeout(() => {
-                if (toast.parentNode) {
+                if (toast && toast.parentNode) {
                     toast.parentNode.removeChild(toast);
                 }
                 this.activeToasts.delete(toastId);
-            }, 250);
+            }, 300);
         },
 
         /**
-         * Remove duplicate toast by message
+         * Remove duplicate toast by exact message match
          */
-        removeDuplicate(message) {
-            for (const [toastId, toast] of this.activeToasts.entries()) {
-                const toastMessage = toast.querySelector('.toast-message');
-                if (toastMessage && toastMessage.textContent === message) {
+        removeDuplicateByMessage(message) {
+            // Find and remove any toast with the same message
+            for (const [toastId, toastData] of this.activeToasts.entries()) {
+                if (toastData.message === message) {
                     this.remove(toastId);
                 }
             }
+        },
+
+        /**
+         * Clear all toasts
+         */
+        clearAll() {
+            const toastIds = Array.from(this.activeToasts.keys());
+            toastIds.forEach(id => this.remove(id));
         }
     };
 
@@ -776,10 +800,88 @@
          */
         setupCalculateButton() {
             const calculateBtn = document.getElementById('calculate-btn');
+            const clearFormBtn = document.getElementById('clear-form-btn');
+            const resetSettingsBtn = document.getElementById('reset-settings-btn');
             
             calculateBtn.addEventListener('click', () => {
                 this.handleCalculate();
             });
+
+            // Clear Form Button - clears only form inputs
+            clearFormBtn.addEventListener('click', () => {
+                if (confirm('Clear all form inputs? This will not delete your saved data.')) {
+                    this.clearForm();
+                    ToastManager.show('Form cleared successfully', 'success');
+                }
+            });
+
+            // Reset Settings Button - clears everything
+            resetSettingsBtn.addEventListener('click', () => {
+                if (confirm('Reset all settings and clear saved data? This action cannot be undone.')) {
+                    this.resetAllSettings();
+                }
+            });
+        },
+
+        /**
+         * Clear form inputs only
+         */
+        clearForm() {
+            // Reset all form inputs to default
+            document.getElementById('weight').value = '';
+            document.getElementById('age').value = '';
+            document.getElementById('gender').value = '';
+            document.getElementById('activity-level').value = '';
+            document.getElementById('exercise-duration').value = '0';
+            document.getElementById('exercise-intensity').value = 'medium';
+            document.getElementById('climate').value = 'moderate';
+            document.getElementById('altitude').value = 'sea-level';
+            
+            // Uncheck all health conditions
+            document.getElementById('pregnant').checked = false;
+            document.getElementById('breastfeeding').checked = false;
+            document.getElementById('illness').checked = false;
+            document.getElementById('kidney-disease').checked = false;
+
+            // Reset weight unit to kg
+            const kgBtn = document.querySelector('.unit-btn[data-unit="kg"]');
+            const lbsBtn = document.querySelector('.unit-btn[data-unit="lbs"]');
+            kgBtn.classList.add('active');
+            kgBtn.setAttribute('aria-pressed', 'true');
+            lbsBtn.classList.remove('active');
+            lbsBtn.setAttribute('aria-pressed', 'false');
+
+            // Clear error messages
+            FormValidator.clearError('weight');
+            FormValidator.clearError('age');
+
+            // Hide results and tracker sections
+            document.getElementById('results-section').style.display = 'none';
+            document.getElementById('tracker-section').style.display = 'none';
+        },
+
+        /**
+         * Reset all settings and clear all data
+         */
+        resetAllSettings() {
+            // Clear form
+            this.clearForm();
+
+            // Clear all localStorage data
+            StorageManager.saveData(StorageManager.getDefaultData());
+
+            // Clear toasts
+            ToastManager.clearAll();
+
+            // Reset UI
+            document.getElementById('results-section').style.display = 'none';
+            document.getElementById('tracker-section').style.display = 'none';
+
+            // Show success message
+            ToastManager.show('All settings and data have been reset', 'success');
+
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         },
 
         /**
